@@ -53,7 +53,6 @@ Dashboard e Histórico
 * Comunicação Serial UART
 * JSON para troca de informações
 * Bluetooth BLE (planejado para próximas versões)
-* Wi-Fi (planejado para próximas versões)
 
 ---
 
@@ -297,7 +296,6 @@ ESP32
 Planejado para implementação:
 
 * Bluetooth Low Energy (BLE)
-* Wi-Fi
 
 ---
 
