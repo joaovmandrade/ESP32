@@ -1,108 +1,210 @@
-# BioSpine MVP - Comunicação ESP32
+# BioSpine MVP V3 - Plataforma de Comunicação e Processamento Postural com ESP32
 
 ## Sobre o Projeto
 
-O BioSpine é um sistema de monitoramento postural em desenvolvimento que tem como objetivo auxiliar na identificação de desvios posturais por meio de sensores embarcados em um colete inteligente.
+O BioSpine é uma solução em desenvolvimento voltada para monitoramento e correção postural através de um colete inteligente equipado com sensores eletrônicos.
 
-Esta primeira versão consiste em um MVP (Minimum Viable Product) desenvolvido para validar a camada de comunicação entre um microcontrolador ESP32 e sistemas externos.
+Este repositório apresenta a terceira versão do MVP (Minimum Viable Product), cujo objetivo é validar a arquitetura embarcada responsável por:
 
-Nesta etapa, o foco não está na leitura de sensores reais, mas sim na comprovação de que o ESP32 é capaz de:
+- Receber informações dos sensores;
+- Processar os dados recebidos;
+- Classificar a postura do usuário;
+- Gerar alertas de postura inadequada;
+- Disponibilizar os dados para integração com aplicativos mobile e sistemas externos.
 
-* Receber comandos externos;
-* Processar informações;
-* Retornar respostas estruturadas;
-* Simular dados de postura;
-* Servir como base para futuras integrações com sensores e aplicativo mobile.
-
-Os dados utilizados atualmente são simulados através de valores aleatórios, permitindo validar toda a arquitetura antes da integração dos componentes eletrônicos definitivos.
+Nesta versão os sensores ainda são simulados por software, permitindo validar toda a lógica de processamento antes da integração física dos componentes eletrônicos.
 
 ---
 
-## Objetivos
+# Objetivo
 
-O objetivo desta implementação é disponibilizar uma estrutura funcional para que futuras equipes possam integrar:
+O principal objetivo deste MVP é fornecer uma base funcional para integração com os sensores que serão instalados no colete inteligente.
 
-* Sensores de inclinação;
-* Sensores de pressão;
-* Sensores de curvatura;
-* Comunicação sem fio;
-* Aplicativo de monitoramento;
-* Sistema de correção postural.
+A arquitetura foi desenvolvida para que a substituição dos dados simulados pelos sensores reais exija alterações mínimas no código.
 
-Arquitetura prevista para a solução final:
+---
+
+# Arquitetura do Sistema
+
+## MVP Atual
 
 ```text
-Sensores
-   ↓
-ESP32
-   ↓
-Bluetooth BLE / Wi-Fi
-   ↓
+Sensores Simulados
+        ↓
+      ESP32
+        ↓
+Processamento
+        ↓
+Classificação Postural
+        ↓
+Geração de Alertas
+        ↓
+JSON
+        ↓
+Monitor Serial
+```
+
+---
+
+## Arquitetura Final Prevista
+
+```text
+MPU6050 / ISM330
+Flex Sensors
+FSR
+        ↓
+      ESP32
+        ↓
+Processamento
+        ↓
+Bluetooth BLE
+        ↓
 Aplicativo Mobile
-   ↓
+        ↓
 Dashboard e Histórico
 ```
 
 ---
 
-## Tecnologias Utilizadas
+# Tecnologias Utilizadas
 
-* ESP32 Dev Module
-* Arduino IDE
-* Linguagem C++
-* Comunicação Serial UART
-* JSON para troca de informações
-* Bluetooth BLE (planejado para próximas versões)
+- ESP32 Dev Module
+- Arduino IDE
+- Linguagem C++
+- Comunicação Serial UART
+- Estrutura de dados JSON
+- Bluetooth BLE (planejado para versões futuras)
 
 ---
 
-## Funcionalidades Implementadas
+# Funcionalidades Implementadas
 
-### Recebimento de Comandos
+## Recebimento de Comandos
 
-O ESP32 recebe comandos enviados através do Monitor Serial.
+O ESP32 recebe comandos através do Monitor Serial.
 
 Comandos disponíveis:
 
-| Comando   | Descrição                          |
-| --------- | ---------------------------------- |
-| START     | Inicia o monitoramento             |
-| STOP      | Interrompe o monitoramento         |
-| STATUS    | Retorna dados simulados de postura |
-| CALIBRATE | Simula a calibração do sistema     |
+| Comando | Descrição |
+|----------|----------|
+| START | Inicia monitoramento contínuo |
+| STOP | Interrompe monitoramento |
+| STATUS | Retorna uma leitura instantânea |
+| CALIBRATE | Simula calibração do sistema |
 
 ---
 
-### Processamento de Dados
+## Simulação de Sensores
 
-O sistema gera valores simulados de inclinação postural para validar a lógica de processamento.
+O sistema simula os sensores que serão utilizados futuramente no colete.
 
-Faixas utilizadas:
+### MPU6050 / ISM330
 
-| Ângulo    | Classificação |
-| --------- | ------------- |
-| 0° a 10°  | GOOD          |
-| 11° a 20° | WARNING       |
-| 21° a 45° | BAD           |
+Responsável por:
+
+- Inclinação do tronco
+- Movimento corporal
+- Orientação espacial
+
+Atualmente:
+
+```cpp
+return random(0, 450) / 10.0;
+```
 
 ---
 
-### Retorno Estruturado em JSON
+### Flex Sensor Esquerdo
 
-Exemplo de resposta:
+Responsável por:
+
+- Curvatura lateral da coluna
+
+Atualmente:
+
+```cpp
+return random(300, 800);
+```
+
+---
+
+### Flex Sensor Direito
+
+Responsável por:
+
+- Curvatura lateral da coluna
+
+Atualmente:
+
+```cpp
+return random(300, 800);
+```
+
+---
+
+### FSR (Force Sensing Resistor)
+
+Responsável por:
+
+- Distribuição de pressão
+
+Atualmente:
+
+```cpp
+return random(0, 100);
+```
+
+---
+
+# Classificação Postural
+
+O sistema classifica a postura com base no ângulo calculado.
+
+| Ângulo | Status |
+|----------|----------|
+| 0° a 10° | GOOD |
+| 11° a 20° | WARNING |
+| Acima de 20° | BAD |
+
+---
+
+# Sistema de Alertas
+
+Quando uma postura inadequada é detectada:
 
 ```json
 {
-  "angle": 19,
-  "status": "WARNING"
+  "status": "BAD",
+  "alert": true
+}
+```
+
+O sistema pode futuramente:
+
+- Acionar vibração;
+- Enviar alerta BLE;
+- Notificar aplicativo mobile.
+
+---
+
+# Exemplo de Resposta
+
+```json
+{
+  "angle": 28.2,
+  "flex_left": 743,
+  "flex_right": 685,
+  "pressure": 89,
+  "status": "BAD",
+  "alert": true
 }
 ```
 
 ---
 
-## Exemplos de Uso
+# Comandos Disponíveis
 
-### STATUS
+## STATUS
 
 Entrada:
 
@@ -114,14 +216,18 @@ Saída:
 
 ```json
 {
-  "angle": 19,
-  "status": "WARNING"
+  "angle": 13.5,
+  "flex_left": 769,
+  "flex_right": 660,
+  "pressure": 36,
+  "status": "WARNING",
+  "alert": false
 }
 ```
 
 ---
 
-### START
+## START
 
 Entrada:
 
@@ -138,9 +244,11 @@ Saída:
 }
 ```
 
+Após iniciar, o ESP32 envia leituras continuamente.
+
 ---
 
-### STOP
+## STOP
 
 Entrada:
 
@@ -159,7 +267,7 @@ Saída:
 
 ---
 
-### CALIBRATE
+## CALIBRATE
 
 Entrada:
 
@@ -178,9 +286,9 @@ Saída:
 
 ---
 
-## Como Executar
+# Como Executar
 
-### 1. Instalar a Arduino IDE
+## 1. Instalar Arduino IDE
 
 Download:
 
@@ -188,21 +296,22 @@ https://www.arduino.cc/en/software
 
 ---
 
-### 2. Instalar o suporte ao ESP32
+## 2. Instalar suporte ao ESP32
 
-Na Arduino IDE:
+Arduino IDE:
 
 ```text
 Boards Manager
 ↓
 Pesquisar: ESP32
 ↓
-Instalar: ESP32 by Espressif Systems
+Instalar:
+ESP32 by Espressif Systems
 ```
 
 ---
 
-### 3. Selecionar a Placa
+## 3. Selecionar Placa
 
 ```text
 ESP32 Dev Module
@@ -210,9 +319,7 @@ ESP32 Dev Module
 
 ---
 
-### 4. Selecionar a Porta Serial
-
-Selecionar a porta correspondente ao ESP32 conectado.
+## 4. Selecionar Porta
 
 Exemplo:
 
@@ -222,22 +329,21 @@ COM5
 
 ---
 
-### 5. Realizar Upload
+## 5. Fazer Upload
 
-Compilar e enviar o firmware para o ESP32.
+Enviar o firmware para o ESP32.
 
 Em algumas placas pode ser necessário:
 
 ```text
-Segurar o botão BOOT
-durante o upload
+Segurar BOOT durante o upload
 ```
 
 ---
 
-### 6. Abrir o Monitor Serial
+## 6. Abrir Monitor Serial
 
-Configurações recomendadas:
+Configurações:
 
 ```text
 Baud Rate: 115200
@@ -246,24 +352,18 @@ Line Ending: New Line
 
 ---
 
-### 7. Reinicialização do ESP32
+## 7. Reiniciar ESP32
 
-Durante os testes foi observado que o ESP32 pode não iniciar automaticamente após o upload ou após a abertura do Monitor Serial.
-
-Caso isso aconteça:
+Caso o Monitor Serial não exiba as mensagens iniciais:
 
 ```text
-Pressione o botão EN
+Pressionar botão EN
 ```
-
-presente na placa.
-
-O botão EN reinicia o microcontrolador e executa novamente o firmware gravado.
 
 Fluxo recomendado:
 
 ```text
-Upload do código
+Upload
 ↓
 Abrir Monitor Serial
 ↓
@@ -272,75 +372,161 @@ Pressionar EN
 Executar testes
 ```
 
-Importante:
+O botão EN apenas reinicia o microcontrolador.
 
-O botão EN não apaga o firmware. Ele apenas reinicia a execução do programa armazenado na memória do ESP32.
+O firmware não é apagado.
 
 ---
 
-## Estrutura Atual do Sistema
+# Integração dos Sensores Reais
+
+## MPU6050
+
+Conexão planejada:
 
 ```text
-ESP32
-│
-├── Recebe comandos
-├── Processa informações
-├── Simula dados de postura
-└── Retorna respostas JSON
+VCC → 3.3V
+GND → GND
+SDA → GPIO21
+SCL → GPIO22
+```
+
+Substituir:
+
+```cpp
+float readMPUAngle() {
+    return random(0, 450) / 10.0;
+}
+```
+
+Por:
+
+```cpp
+float readMPUAngle() {
+    mpu.update();
+    return mpu.getAngleX();
+}
 ```
 
 ---
 
-## Comunicação Sem Fio (Próximas Versões)
+## Flex Sensor Esquerdo
 
-Planejado para implementação:
+Conexão:
 
-* Bluetooth Low Energy (BLE)
+```text
+GPIO34
+```
 
----
+Substituir:
 
-## Próximas Etapas
+```cpp
+int readFlexLeft() {
+    return random(300, 800);
+}
+```
 
-Integração com sensores reais:
+Por:
 
-* MPU6050
-* ISM330
-* Flex Sensor
-* Force Sensing Resistor (FSR)
-* Sensor Piezoelétrico
-
-Desenvolvimento de:
-
-* Aplicativo Mobile
-* Dashboard em tempo real
-* Histórico de postura
-* Sistema de calibração
-* Comunicação Bluetooth BLE
+```cpp
+int readFlexLeft() {
+    return analogRead(34);
+}
+```
 
 ---
 
-## Resultados Obtidos
+## Flex Sensor Direito
+
+Conexão:
+
+```text
+GPIO35
+```
+
+Substituir:
+
+```cpp
+int readFlexRight() {
+    return random(300, 800);
+}
+```
+
+Por:
+
+```cpp
+int readFlexRight() {
+    return analogRead(35);
+}
+```
+
+---
+
+## FSR
+
+Conexão:
+
+```text
+GPIO32
+```
+
+Substituir:
+
+```cpp
+int readFSR() {
+    return random(0, 100);
+}
+```
+
+Por:
+
+```cpp
+int readFSR() {
+    return analogRead(32);
+}
+```
+
+---
+
+# Resultados Obtidos
 
 ✅ ESP32 configurado e operacional
 
-✅ Comunicação serial funcional
+✅ Comunicação Serial funcional
 
 ✅ Recebimento de comandos
 
-✅ Processamento de informações
+✅ Processamento de dados
 
-✅ Retorno estruturado em JSON
+✅ Simulação de sensores
 
-✅ Simulação de dados posturais
+✅ Classificação postural
 
-✅ Arquitetura preparada para integração com sensores
+✅ Geração de alertas
 
-✅ Base preparada para comunicação com aplicativo mobile
+✅ Estrutura JSON
+
+✅ Arquitetura preparada para integração com sensores reais
+
+✅ Base pronta para integração com aplicativo mobile
 
 ---
 
-## Autor
+# Próximas Etapas
 
-João Vitor Andrade
+- Integração do MPU6050
+- Integração dos Flex Sensors
+- Integração do FSR
+- Comunicação Bluetooth BLE
+- Aplicativo Mobile
+- Dashboard de monitoramento
+- Histórico postural
+- Sistema de vibração para correção postural
 
-Projeto desenvolvido como etapa inicial do sistema BioSpine para validação da comunicação entre hardware embarcado e software de monitoramento postural.
+---
+
+# Autor
+
+**João Vitor Andrade**
+
+Projeto desenvolvido como etapa inicial do sistema BioSpine para validação da comunicação entre hardware embarcado, sensores posturais e software de monitoramento.
